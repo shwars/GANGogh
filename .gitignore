@@ -1,0 +1,6 @@
+__pycache__
+generated/
+*.pkl
+*.pyc
+*.py[cod]
+*$py.class

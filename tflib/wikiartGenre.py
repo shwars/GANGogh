@@ -10,7 +10,7 @@ import os
 DIM = 64
 
 #Set your own path to images
-path = os.path.normpath('C:/Users/kenny/Desktop/toGit/misc/smallimages/')
+path = os.path.normpath('e:\\Art\\data64')
 
 #This dictionary should be updated to hold the absolute number of images associated with each genre used during training
 styles = {'abstract': 14794,

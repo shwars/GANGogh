@@ -330,8 +330,44 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as session:
             samples = session.run(all_fixed_noise_samples, feed_dict={sample_labels: curLabel})
             samples = ((samples+1.)*(255.99/2)).astype('int32')
             lib.save_images.save_images(samples.reshape((BATCH_SIZE, 3, 64, 64)), 'generated/samples_{}_{}.png'.format(str(i), iteration))
+            lib.save_images.save_images_ind(samples.reshape((BATCH_SIZE, 3, 64, 64)), 'generated/ind/samples_{}_{}_'.format(str(i), iteration)+'{}.png')
     
-    
+    def generate_good_images(iteration,thresh=.95):
+        NUM_TO_MAKE = BATCH_SIZE
+        TRIES = BATCH_SIZE*5
+        CONF_THRESH = thresh
+        for i in range(CLASSES):
+            l = 0
+            curLabel= genRandomLabels(BATCH_SIZE,CLASSES,condition=i)
+            j = 0
+            images = None
+            while(j<NUM_TO_MAKE and l<TRIES):
+                genr = Generator(BATCH_SIZE, CLASSES, sample_labels)[0]
+                samples = session.run(genr, feed_dict={sample_labels: curLabel})
+                samples = np.reshape(samples,[-1, 3, 64, 64])
+                samples = ((samples+1.)*(255.99/2)).astype('int32')
+                prediction,accuracy = session.run([disc_real_class,realAccuracy] , feed_dict = {all_real_data_conv: samples, all_real_label_conv: curLabel})
+                guess = np.argmax(prediction,1)
+                my_equal = np.equal(guess,np.argmax(curLabel,1))
+                for s,_ in enumerate(prediction):
+                    prediction[s] = prediction[s]/np.sum(prediction[s])
+                    confidence = np.amax(prediction,1)
+                    for k,image in enumerate(samples):
+                        if guess[k] == i and confidence[k]>CONF_THRESH and j < NUM_TO_MAKE:
+                            if isinstance(images, np.ndarray):
+                                images = np.concatenate((images,image),0)
+                            else:
+                                images = image
+                        j+=1
+                    l += 1
+                CONF_THRESH = CONF_THRESH * .9
+            try:
+                samples = images
+                lib.save_images.save_images(samples.reshape((-1, 3, 64, 64)), 'generated/good_samples_{}_{}.png'.format(str(i),iteration))
+                lib.save_images.save_images_ind(samples.reshape((-1, 3, 64, 64)), 'generated/ind/good_samples_{}_{}_'.format(str(i), iteration)+'{}.png')
+            except Exception as e:
+                print(e)
+        
     
     # Dataset iterator
     train_gen, dev_gen = lib.wikiartGenre.load(BATCH_SIZE)
@@ -401,6 +437,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as session:
 
         if iteration % 1000 == 999:
             generate_image(iteration)
+            generate_good_images(iteration)
             #Can add generate_good_images method in here if desired
             
         if (iteration < 10) or (iteration % 100 == 99):
