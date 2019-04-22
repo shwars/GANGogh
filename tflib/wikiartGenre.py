@@ -7,10 +7,10 @@ import time
 import random
 import os
 #Set the dimension of images you want to be passed in to the network
-DIM = 64
+DIM = 128
 
 #Set your own path to images
-path = os.path.normpath('e:\\Art\\data64')
+path = os.path.normpath('e:\\Art\\data{}'.format(DIM))
 
 #This dictionary should be updated to hold the absolute number of images associated with each genre used during training
 styles = {'abstract': 14794,
